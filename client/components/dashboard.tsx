@@ -1,166 +1,100 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import AuthForm from "@/components/auth-form";
-import PlantMonitor from "@/components/plant-monitor";
-import MusicPlayer from "@/components/music-player";
-import WaterControl from "@/components/water-control";
-import { Button } from "@/components/ui/button";
-
-const API_URL = "http://localhost:4000";
+import { useState, useEffect } from 'react'
+import AuthForm from '@/components/auth-form'
+import PlantMonitor from '@/components/plant-monitor'
+import MusicPlayer from '@/components/music-player'
+import WaterControl from '@/components/water-control'
+import { Button } from '@/components/ui/button'
 
 export default function Dashboard() {
-  const [user, setUser] = useState<{
-    id: number;
-    email: string;
-    name?: string;
-  } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // State dữ liệu cảm biến
-  const [currentData, setCurrentData] = useState({
-    soilMoisture: 0,
-    temperature: 0,
-    humidity: 0,
-    lightIntensity: 0,
-  });
-
-  // State lịch sử để vẽ biểu đồ
-  const [historyData, setHistoryData] = useState<any[]>([]);
+  const [user, setUser] = useState<{ email: string } | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [soilMoisture, setSoilMoisture] = useState(45)
 
   useEffect(() => {
-    // 1. Kiểm tra đăng nhập từ localStorage
-    const savedUser = localStorage.getItem("smartplant_user");
+    // Check if user is logged in from localStorage
+    const savedUser = localStorage.getItem('smartplant_user')
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      setUser(JSON.parse(savedUser))
     }
-    setIsLoading(false);
-  }, []);
+    setIsLoading(false)
+  }, [])
 
-  // 2. Polling dữ liệu (Gọi API mỗi 5 giây)
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchData = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/sensors?userId=${user.id}`);
-        const data = await res.json();
-
-        if (data.current) {
-          setCurrentData({
-            soilMoisture: Number(data.current.soilMoisture),
-            temperature: Number(data.current.temperature),
-            humidity: Number(data.current.humidity),
-            lightIntensity: Number(data.current.lightIntensity),
-          });
-        }
-
-        if (data.history) {
-          // Format lại dữ liệu cho biểu đồ (Date -> Time string)
-          const formattedHistory = data.history.map((log: any) => ({
-            time: new Date(log.recordedAt).toLocaleTimeString("vi-VN", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            temperature: Number(log.temperature),
-            humidity: Number(log.humidity),
-            soilMoisture: Number(log.soilMoisture),
-            lightIntensity: Number(log.lightIntensity),
-          }));
-          setHistoryData(formattedHistory);
-        }
-      } catch (error) {
-        console.error("Lỗi kết nối server:", error);
-      }
-    };
-
-    fetchData(); // Gọi ngay lập tức
-    const interval = setInterval(fetchData, 5000); // Lặp lại mỗi 5s
-
-    return () => clearInterval(interval);
-  }, [user]);
-
-  const handleAuth = (userData: any) => {
-    setUser(userData);
-    localStorage.setItem("smartplant_user", JSON.stringify(userData));
-  };
+  const handleAuth = (email: string) => {
+    const userData = { email }
+    setUser(userData)
+    localStorage.setItem('smartplant_user', JSON.stringify(userData))
+  }
 
   const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem("smartplant_user");
-  };
+    setUser(null)
+    localStorage.removeItem('smartplant_user')
+  }
 
   if (isLoading) {
     return (
-      <div className='flex min-h-screen items-center justify-center'>
-        <div className='h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent' />
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
-    );
+    )
   }
 
   if (!user) {
-    return <AuthForm onAuth={handleAuth} />;
+    return <AuthForm onAuth={handleAuth} />
   }
 
   return (
-    <div className='min-h-screen bg-gray-50 pb-20'>
-      <header className='sticky top-0 z-10 border-b bg-white/80 px-4 py-4 backdrop-blur-md'>
-        <div className='container mx-auto flex items-center justify-between'>
-          <div className='flex items-center gap-2'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600'>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
+      <header className="border-b bg-white/80 backdrop-blur-sm">
+        <div className="container mx-auto flex items-center justify-between px-4 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-600">
               <svg
-                className='h-6 w-6'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
+                className="h-6 w-6 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
                 <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   strokeWidth={2}
-                  d='M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
                 />
               </svg>
             </div>
             <div>
-              <h1 className='text-xl font-bold text-emerald-900'>
-                Smart Planting
-              </h1>
-              <p className='text-sm text-emerald-600'>IoT Garden Monitor</p>
+              <h1 className="text-xl font-bold text-emerald-900">Smart Planting</h1>
+              <p className="text-sm text-emerald-600">IoT Garden Monitor</p>
             </div>
           </div>
-          <div className='flex items-center gap-4'>
-            <span className='hidden text-sm text-gray-600 sm:inline'>
-              Xin chào, {user.name || user.email}
-            </span>
-            <Button onClick={handleLogout} variant='outline' size='sm'>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600">{user.email}</span>
+            <Button onClick={handleLogout} variant="outline" size="sm">
               Đăng xuất
             </Button>
           </div>
         </div>
       </header>
 
-      <main className='container mx-auto px-4 py-8'>
-        <div className='mb-6'>
-          <h2 className='text-3xl font-bold text-emerald-900'>Dashboard</h2>
-          <p className='text-emerald-600'>
-            Giám sát và điều khiển vườn thông minh của bạn
-          </p>
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold text-emerald-900">Dashboard</h2>
+          <p className="text-emerald-600">Giám sát và điều khiển vườn thông minh của bạn</p>
         </div>
 
-        <div className='space-y-6'>
-          <div className='w-full'>
-            {/* Truyền dữ liệu độ ẩm đất thực tế xuống bộ điều khiển tưới */}
-            <WaterControl soilMoisture={currentData.soilMoisture} />
+        <div className="space-y-6">
+          <div className="w-full">
+            <WaterControl soilMoisture={soilMoisture} />
           </div>
-
-          <div className='grid gap-6 md:grid-cols-2'>
-            {/* Truyền dữ liệu lịch sử và hiện tại xuống biểu đồ */}
-            <PlantMonitor currentData={currentData} historyData={historyData} />
+          
+          <div className="grid gap-6 lg:grid-cols-2">
+            <PlantMonitor soilMoisture={soilMoisture} setSoilMoisture={setSoilMoisture} />
             <MusicPlayer />
           </div>
         </div>
       </main>
     </div>
-  );
+  )
 }

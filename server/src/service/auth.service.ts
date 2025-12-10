@@ -29,10 +29,10 @@ export const registerUser = async (data: RegisterInput) => {
 export const loginUser = async (email: string, pass: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
-  if (!user) throw new Error("Sai email");
+  if (!user) throw new Error("Tài khoản hoặc mật khẩu sai");
 
   const isValid = await bcrypt.compare(pass, user.passwordHash);
-  if (!isValid) throw new Error("Mật khẩu không chính xác");
+  if (!isValid) throw new Error("Tài khoản hoặc mật khẩu sai");
 
   const { passwordHash, ...userWithoutPass } = user;
   return userWithoutPass;

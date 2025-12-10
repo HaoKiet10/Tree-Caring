@@ -1,9 +1,23 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  userId       Int         @id @default(autoincrement()) @map("user_id")
+  email        String      @unique
+  passwordHash String      @map("password_hash")
+  fullName     String?     @map("full_name")
+  
+  // Quan hệ ngược: Một user có nhiều log cảm biến
+  sensorLogs   SensorLog[]
+
+  @@map("users")
 }
 
 model SensorLog {
@@ -13,18 +27,12 @@ model SensorLog {
   soilMoisture   Decimal? @map("soil_moisture") @db.Decimal
   lightIntensity Decimal? @map("light_intensity") @db.Decimal
   recordedAt     DateTime @default(now()) @map("recorded_at")
+  
+  // Khóa ngoại trỏ về User
   userId         Int?     @map("user_id")
+  user           User?    @relation(fields: [userId], references: [userId])
 
   @@map("sensor_logs")
-}
-
-model User {
-  userId       Int     @id @default(autoincrement()) @map("user_id")
-  email        String  @unique
-  passwordHash String  @map("password_hash")
-  fullName     String? @map("full_name")
-
-  @@map("users")
 }
 
 model Song {
@@ -32,6 +40,7 @@ model Song {
   title           String
   artist          String?
   durationSeconds Int?    @map("duration_seconds")
+  // Lưu ý: Bạn cần thêm field file_url nếu muốn play nhạc, hoặc hardcode ở frontend
 
   @@map("songs")
 }

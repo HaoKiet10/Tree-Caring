@@ -22,23 +22,24 @@ export const connectMQTT = () => {
 
   // Xử lý khi có tin nhắn đến
   client.on("message", async (topic: string, message: Buffer) => {
-    try {
-      // 1. Chuyển Buffer thành String rồi thành JSON
+    if (topic === TOPIC) {
+      try {
+        // 1. Chuyển Buffer thành String rồi thành JSON
+        const payloadStr = message.toString();
+        const payloadJson = JSON.parse(payloadStr);
 
-      const payloadStr = message.toString();
-      const payloadJson = JSON.parse(payloadStr);
+        console.log("📩 Nhận dữ liệu:", payloadJson);
 
-      console.log("📩 Nhận dữ liệu:", payloadJson);
+        // 2. Validate dữ liệu
+        const validatedData = sensorDataSchema.parse(payloadJson);
 
-      // 2. Validate dữ liệu
-      const validatedData = sensorDataSchema.parse(payloadJson);
+        // 3. Lưu vào Database (Gọi Service cũ)
+        await saveSensorData(validatedData);
 
-      // 3. Lưu vào Database (Gọi Service cũ)
-      await saveSensorData(validatedData);
-
-      console.log("💾 Đã lưu vào Database thành công!");
-    } catch (error) {
-      console.error("❌ Lỗi xử lý dữ liệu MQTT:", error);
+        console.log("💾 Đã lưu vào Database thành công!");
+      } catch (error) {
+        console.error("❌ Lỗi xử lý dữ liệu MQTT:", error);
+      }
     }
   });
 

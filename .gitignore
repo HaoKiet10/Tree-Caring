@@ -47,4 +47,3 @@ next-env.d.ts
 *.njsproj
 *.sln
 *.sw?
-client/package-lock.json

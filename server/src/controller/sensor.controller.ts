@@ -35,6 +35,6 @@ export const getData = async (req: Request, res: Response) => {
 
     res.status(200).send(jsonString);
   } catch (error) {
-    res.status(500).json({ error: "Lỗi lấy dữ liệu" });
+    res.status(500).json({ error: { error } });
   }
 };

@@ -6,10 +6,13 @@ import { z, ZodError } from "zod";
 export const register = async (req: Request, res: Response) => {
   try {
     // Validate
-    const validatedData = registerSchema.parse(req.body);
+    console.log(req.body);
+    const { email, password, fullName } = registerSchema.parse(req.body);
+    console.log(email, password, fullName);
 
     // Call Service
-    const user = await authService.registerUser(validatedData);
+    const user = await authService.registerUser(email, password, fullName);
+    console.log(user);
 
     res.status(201).json({ success: true, user });
   } catch (error: any) {
@@ -33,7 +36,7 @@ export const login = async (req: Request, res: Response) => {
     if (error instanceof z.ZodError) {
       return res
         .status(400)
-        .json({ success: false, error: "Dữ liệu không hợp lệ" });
+        .json({ success: false, error: error.issues[0].message });
     }
     res.status(401).json({ success: false, error: error.message });
   }

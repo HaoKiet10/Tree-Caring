@@ -15,19 +15,14 @@ export const saveSensorData = async (data: SensorInput) => {
 };
 
 export const getLatestSensorData = async (userId: number) => {
-  const current = await prisma.sensorLog.findFirst({
+  const logs = await prisma.sensorLog.findMany({
     where: { userId },
     orderBy: { recordedAt: "desc" },
-  });
-
-  const history = await prisma.sensorLog.findMany({
-    where: { userId },
-    orderBy: { recordedAt: "desc" },
-    take: 12, // Lấy 12 bản ghi gần nhất
+    take: 12,
   });
 
   return {
-    current,
-    history: history.reverse(),
+    current: logs[0],
+    history: logs.reverse(),
   };
 };

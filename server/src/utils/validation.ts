@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // --- Auth Schemas ---
 export const registerSchema = z.object({
-  email: z.string().email("Email không hợp lệ").trim().toLowerCase(),
+  email: z.email("Email không hợp lệ").trim().toLowerCase(),
   password: z
     .string()
     .min(8, "Mật khẩu tối thiểu 8 ký tự")
@@ -12,7 +12,7 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z.string().min(1),
 });
 

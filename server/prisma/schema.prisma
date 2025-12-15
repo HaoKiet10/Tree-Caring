@@ -1,46 +1,64 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+
 }
 
+// 1. Bảng User
 model User {
-  userId       Int         @id @default(autoincrement()) @map("user_id")
-  email        String      @unique
-  passwordHash String      @map("password_hash")
-  fullName     String?     @map("full_name")
-  
-  // Quan hệ ngược: Một user có nhiều log cảm biến
-  sensorLogs   SensorLog[]
+  userId       Int     @id @default(autoincrement())
+  email        String  @unique
+  passwordHash String
+  fullName     String?
 
-  @@map("users")
+  // Quan hệ ngược (Reverse relations)
+  sensorLogs      SensorLog[]
+  wateringControl WateringControl? // Quan hệ 1-1 (Một user chỉ có 1 bảng điều khiển)
+
+  @@map("users") // Mapping với tên bảng trong SQL
 }
 
+// 2. Bảng SensorLogs (Nhật ký cảm biến)
 model SensorLog {
-  logId          BigInt   @id @default(autoincrement()) @map("log_id")
-  temperature    Decimal? @db.Decimal
+  logId          BigInt   @id @default(autoincrement())
+  temperature    Decimal? @db.Decimal // SQL numeric map sang Decimal
   humidity       Decimal? @db.Decimal
-  soilMoisture   Decimal? @map("soil_moisture") @db.Decimal
-  lightIntensity Decimal? @map("light_intensity") @db.Decimal
-  recordedAt     DateTime @default(now()) @map("recorded_at")
-  
-  // Khóa ngoại trỏ về User
-  userId         Int?     @map("user_id")
-  user           User?    @relation(fields: [userId], references: [userId])
+  soilMoisture   Decimal? @db.Decimal
+  lightIntensity Decimal? @db.Decimal
+  recordedAt     DateTime @default(now())
 
-  @@map("sensor_logs")
+  // Khóa ngoại (Foreign Key)
+  userId Int @map("user_id") // Trong SQL cột này tên là 'user_id'
+
+  user User @relation(fields: [userId], references: [userId])
+
+  @@map("sensorLogs")
 }
 
+// 3. Bảng WateringControl (Điều khiển tưới)
+model WateringControl {
+  controlId       BigInt    @id @default(autoincrement())
+  userId          Int       @unique // Unique để đảm bảo quan hệ 1-1
+  pumpStatus      Boolean   @default(false)
+  mode            String    @default("MANUAL") // Có thể đổi thành Enum nếu muốn chặt chẽ hơn
+  soilThreshold   Int       @default(30)
+  maxPumpDuration Int       @default(10)
+  lastWateredAt   DateTime?
+  updatedAt       DateTime  @default(now()) @updatedAt // Tự động cập nhật thời gian khi sửa đổi
+
+  user User @relation(fields: [userId], references: [userId])
+
+  @@map("wateringControl")
+}
+
+// 4. Bảng Songs (Bài hát - giữ nguyên theo SQL của bạn)
 model Song {
-  songId          Int     @id @default(autoincrement()) @map("song_id")
-  title           String
-  artist          String?
-  durationSeconds Int?    @map("duration_seconds")
-  // Lưu ý: Bạn cần thêm field file_url nếu muốn play nhạc, hoặc hardcode ở frontend
+  songId Int     @id @default(autoincrement())
+  title  String
+  artist String?
 
   @@map("songs")
 }

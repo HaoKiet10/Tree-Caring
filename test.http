@@ -1,0 +1,19 @@
+# POST http://localhost:4000/api/auth/register
+# Content-Type: application/json
+
+# { 
+#     "email": "sinluvyue@gmail.com", 
+#     "password": "Password1",
+#     "fullName": "Yunetrea"
+# }
+
+# POST http://localhost:4000/api/auth/login
+# Content-Type: application/json
+
+# {
+#     "email" : "sinluvyue@gmail.com",
+#     "password": "Password1"
+# }
+
+GET http://localhost:4000/api/sensors?userId=2
+Content-Type: application/json

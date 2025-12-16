@@ -18,6 +18,7 @@ export const registerUser = async (data: RegisterInput) => {
       email: data.email,
       passwordHash: hashedPassword,
       fullName: data.fullName,
+      deviceId: data.deviceId,
     },
   });
 

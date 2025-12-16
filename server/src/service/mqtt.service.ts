@@ -4,7 +4,7 @@ import { sensorDataSchema } from "../utils/validation";
 
 // Kết nối đến Broker (Ví dụ dùng Broker public để test, thực tế nên dùng Private)
 const BROKER_URL = "ws://broker.hivemq.com:8000/mqtt";
-const TOPIC = "home/garden/sensor-data";
+const RECEIVE_TOPIC = "078116497/sensor";
 
 export const connectMQTT = () => {
   const client = mqtt.connect(BROKER_URL);
@@ -13,16 +13,13 @@ export const connectMQTT = () => {
     console.log("✅ Đã kết nối tới MQTT Broker");
 
     // Đăng ký lắng nghe topic
-    client.subscribe(TOPIC, (err: Error | null) => {
-      if (!err) {
-        console.log(`📡 Đang lắng nghe tại topic: ${TOPIC}`);
-      }
-    });
+    client.subscribe(RECEIVE_TOPIC);
+    console.log(`📡 Đang lắng nghe tại topic: ${RECEIVE_TOPIC}`);
   });
 
   // Xử lý khi có tin nhắn đến
   client.on("message", async (topic: string, message: Buffer) => {
-    if (topic === TOPIC) {
+    if (topic === RECEIVE_TOPIC) {
       try {
         // 1. Chuyển Buffer thành String rồi thành JSON
         const payloadStr = message.toString();

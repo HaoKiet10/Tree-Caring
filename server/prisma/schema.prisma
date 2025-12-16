@@ -4,24 +4,24 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-
 }
 
 // 1. Bảng User
 model User {
   userId       Int     @id @default(autoincrement())
+  deviceId     Int?    @unique
   email        String  @unique
   passwordHash String
   fullName     String?
 
   // Quan hệ ngược (Reverse relations)
-  sensorLogs      SensorLog[]
+  sensorLog SensorLog[] // Một user có thể có nhiều sensorLogs qua Device
   wateringControl WateringControl? // Quan hệ 1-1 (Một user chỉ có 1 bảng điều khiển)
 
   @@map("users") // Mapping với tên bảng trong SQL
 }
 
-// 2. Bảng SensorLogs (Nhật ký cảm biến)
+
 model SensorLog {
   logId          BigInt   @id @default(autoincrement())
   temperature    Decimal? @db.Decimal // SQL numeric map sang Decimal
@@ -31,9 +31,9 @@ model SensorLog {
   recordedAt     DateTime @default(now())
 
   // Khóa ngoại (Foreign Key)
-  userId Int @map("user_id") // Trong SQL cột này tên là 'user_id'
+  deviceId Int
 
-  user User @relation(fields: [userId], references: [userId])
+  user User @relation(fields: [deviceId], references: [deviceId])
 
   @@map("sensorLogs")
 }

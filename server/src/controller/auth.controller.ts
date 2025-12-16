@@ -28,7 +28,7 @@ export const login = async (req: Request, res: Response) => {
     const { email, password } = loginSchema.parse(req.body);
     const user = await authService.loginUser(email, password);
 
-    res.status(200).json({ success: true, user });
+    res.status(201).json({ success: true, user });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return res

@@ -5,9 +5,9 @@ export const saveSensorData = async (data: SensorInput) => {
   // Lưu vào DB
   return await prisma.sensorLog.create({
     data: {
-      userId: data.userId,
-      temperature: data.temp,
-      humidity: data.hum,
+      deviceId: data.deviceId,
+      temperature: data.temperature,
+      humidity: data.humidity,
       soilMoisture: data.soil,
       lightIntensity: data.light,
     },
@@ -15,19 +15,23 @@ export const saveSensorData = async (data: SensorInput) => {
 };
 
 export const getLatestSensorData = async (userId: number) => {
-  const current = await prisma.sensorLog.findFirst({
+  const user = await prisma.user.findUnique({
     where: { userId },
-    orderBy: { recordedAt: "desc" },
+    select: { deviceId: true },
   });
 
+  if (!user) {
+    throw new Error("User không tồn tại");
+  }
+
   const history = await prisma.sensorLog.findMany({
-    where: { userId },
+    where: { deviceId: user.deviceId || 0 },
     orderBy: { recordedAt: "desc" },
-    take: 12, // Lấy 12 bản ghi gần nhất
+    take: 12,
   });
 
   return {
-    current,
+    latest: history[0],
     history: history.reverse(),
   };
 };

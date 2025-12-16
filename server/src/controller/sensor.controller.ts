@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as sensorService from "../service/sensor.service";
 import { sensorDataSchema } from "../utils/validation";
+import { number } from "zod";
 
 // POST: Nhận dữ liệu từ ESP32
 export const postData = async (req: Request, res: Response) => {
@@ -18,20 +19,16 @@ export const postData = async (req: Request, res: Response) => {
 
 // GET: Trả dữ liệu cho Frontend
 export const getData = async (req: Request, res: Response) => {
+  console.log("Received getData request with userId:", req.query);
   try {
     const { userId } = req.query;
     if (!userId) {
       return res.status(400).json({ error: "Thiếu userId" });
     }
 
-    const data = await sensorService.getLatestSensorData(
-      parseInt(userId as string)
-    );
+    const data = await sensorService.getLatestSensorData(Number(userId));
 
-    // Xử lý BigInt cho JSON response (nếu có field BigInt nào lọt vào)
-    const jsonString = JSON.stringify(data, (key, value) =>
-      typeof value === "bigint" ? value.toString() : value
-    );
+    const jsonString = JSON.stringify(data);
 
     res.status(200).send(jsonString);
   } catch (error) {

@@ -1,42 +1,62 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface AuthFormProps {
-  onAuth: (email: string) => void
+  onAuth: (user: { userId: number; email: string }) => void;
 }
 
 export default function AuthForm({ onAuth }: AuthFormProps) {
-  const [isSignIn, setIsSignIn] = useState(true)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
+  const [isSignIn, setIsSignIn] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError("");
 
     if (!email || !password) {
-      setError('Vui lòng điền đầy đủ thông tin')
-      return
+      setError("Vui lòng điền đầy đủ thông tin");
+      return;
     }
 
     if (!isSignIn && password !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp')
-      return
+      setError("Mật khẩu xác nhận không khớp");
+      return;
     }
 
-    // Mock authentication - in real app, this would call an API
-    onAuth(email)
-  }
+    fetch("http://localhost:4000/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (data.success) {
+          onAuth({ userId: data.user.userId, email: data.user.email });
+        } else {
+          setError(data.error || "Đã có lỗi xảy ra");
+        }
+      })
+      .catch(() => {
+        setError("Không thể kết nối đến máy chủ");
+      });
+  };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-emerald-100 via-teal-100 to-cyan-100 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-emerald-100 via-teal-100 to-cyan-100 px-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-3 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-600">
@@ -44,8 +64,7 @@ export default function AuthForm({ onAuth }: AuthFormProps) {
               className="h-10 w-10 text-white"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+              viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -55,12 +74,12 @@ export default function AuthForm({ onAuth }: AuthFormProps) {
             </svg>
           </div>
           <CardTitle className="text-2xl font-bold text-emerald-900">
-            {isSignIn ? 'Đăng nhập' : 'Đăng ký'}
+            {isSignIn ? "Đăng nhập" : "Đăng ký"}
           </CardTitle>
           <CardDescription>
             {isSignIn
-              ? 'Đăng nhập để quản lý vườn thông minh của bạn'
-              : 'Tạo tài khoản mới để bắt đầu'}
+              ? "Đăng nhập để quản lý vườn thông minh của bạn"
+              : "Tạo tài khoản mới để bắt đầu"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -101,24 +120,27 @@ export default function AuthForm({ onAuth }: AuthFormProps) {
               </div>
             )}
             {error && <p className="text-sm text-red-600">{error}</p>}
-            <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700">
-              {isSignIn ? 'Đăng nhập' : 'Đăng ký'}
+            <Button
+              type="submit"
+              className="w-full bg-emerald-600 hover:bg-emerald-700">
+              {isSignIn ? "Đăng nhập" : "Đăng ký"}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
             <button
               type="button"
               onClick={() => {
-                setIsSignIn(!isSignIn)
-                setError('')
+                setIsSignIn(!isSignIn);
+                setError("");
               }}
-              className="text-emerald-600 hover:underline"
-            >
-              {isSignIn ? 'Chưa có tài khoản? Đăng ký' : 'Đã có tài khoản? Đăng nhập'}
+              className="text-emerald-600 hover:underline">
+              {isSignIn
+                ? "Chưa có tài khoản? Đăng ký"
+                : "Đã có tài khoản? Đăng nhập"}
             </button>
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

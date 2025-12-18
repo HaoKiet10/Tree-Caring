@@ -2,6 +2,8 @@ import prisma from "../config/db";
 import { WateringControlInput } from "../utils/validation"; // Đảm bảo interface này có đủ các trường bên dưới
 import mqtt from "mqtt";
 import axios from "axios";
+import { handleAutoWatering } from "./autoWatering.service";
+
 const mqttOptions: mqtt.IClientOptions = {
   host: "broker.hivemq.com", // Hoặc broker của bạn
   port: 1883,
@@ -22,31 +24,28 @@ client.on("connect", () => {
     }
   });
 });
-
+//MQTT soil listener
 client.on("message", async (topic, message) => {
   try {
-    if (topic === "078116497/Pump") {
+    if (topic === "078116497/Soil") {
       const payload = JSON.parse(message.toString());
 
-      console.log("🚿 Watering status:", payload);
-
-      // ESP báo đã tưới xong
-      if (payload.event === "PUMP_DONE") {
-        await prisma.wateringControl.update({
-          where: { userId: 1 }, // hoặc lấy từ payload
-          data: {
-            pumpStatus: false,
-            lastWateredAt: new Date(),
-          },
-        });
-
-        console.log("✅ Đã cập nhật DB: pump OFF");
+      if (
+        typeof payload.userId !== "number" ||
+        typeof payload.soilMoisture !== "number"
+      ) {
+        console.warn("⚠️ Invalid soil payload:", payload);
+        return;
       }
+
+      await handleAutoWatering(payload.userId, payload.soilMoisture);
     }
   } catch (err) {
-    console.error("❌ MQTT watering message error:", err);
+    console.error("❌ MQTT Soil message error:", err);
   }
 });
+
+
 export const publishWateringCommand = (action: "ON" | "OFF") => {
   return new Promise(async (resolve, reject) => {
     client.publish("078116497/Pump", action, { qos: 1 }, async (err) => {
@@ -85,7 +84,8 @@ export const upsertWateringControl = async (data: WateringControlInput) => {
       userId: data.userId, // Tìm theo userId
     },
     // Nếu tìm thấy -> Update các trường này
-    update: {
+    update: { 
+      ...axios(data.pump_status !== undefined && { pumpStatus: data.pump_status }),
       pumpStatus: data.pump_status,
       mode: data.mode,
       soilThreshold: data.soil_threshold,

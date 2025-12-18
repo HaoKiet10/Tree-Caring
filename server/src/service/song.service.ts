@@ -2,54 +2,53 @@ import prisma from "../config/db";
 import mqtt from "mqtt";
 
 // --- CẤU HÌNH MQTT ---
-const mqttOptions: mqtt.IClientOptions = {
-  host: "broker.hivemq.com", // Hoặc broker của bạn
-  port: 1883,
-  protocol: "mqtt",
-};
+// Sử dụng cùng Broker với file mqtt.service để đồng bộ
+const BROKER_URL = "mqtt://broker.hivemq.com:1883"; // Sử dụng WebSocket cho Broker public
+const CONTROL_TOPIC = "078116497/music";
 
-const client = mqtt.connect(mqttOptions);
+const client = mqtt.connect(BROKER_URL);
 
 client.on("connect", () => {
-  console.log("✅ Music Service: Đã kết nối MQTT HiveMQ");
+  console.log(" Song Service: Đã kết nối MQTT để gửi lệnh");
 });
 
 client.on("error", (err) => {
-  console.error("❌ Music Service: Lỗi kết nối MQTT", err);
+  console.error(" Song Service: Lỗi kết nối MQTT", err);
 });
 
-// --- LOGIC DATABASE ---
-
-// 1. Lấy tất cả bài hát từ DB
+/**
+ * 1. Lấy danh sách tất cả bài hát từ Database
+ */
 export const getAllSongs = async () => {
-  return await prisma.song.findMany({
-    orderBy: {
-      songId: "asc", // Sắp xếp theo ID
-    },
-  });
+  try {
+    return await prisma.song.findMany({
+      orderBy: {
+        songId: "asc",
+      },
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách nhạc từ DB:", error);
+    throw error;
+  }
 };
 
-// --- LOGIC MQTT ---
-
-// 2. Gửi lệnh điều khiển xuống Arduino
 export const publishSongCommand = (
   action: "PLAY" | "STOP",
   songId?: number
 ) => {
-  const topic = "garden/song/control";
-
   const payload = JSON.stringify({
     action: action,
     song_id: songId || 0,
   });
 
   return new Promise((resolve, reject) => {
-    client.publish(topic, payload, { qos: 1 }, (err) => {
+    // Gửi tin nhắn với QoS 1 để đảm bảo Arduino nhận được lệnh
+    client.publish(CONTROL_TOPIC, payload, { qos: 1 }, (err) => {
       if (err) {
-        console.error("Gửi MQTT thất bại:", err);
+        console.error(" Gửi MQTT thất bại:", err);
         reject(err);
       } else {
-        console.log(`📡 Đã gửi lệnh nhạc: ${payload}`);
+        console.log(` Đã gửi lệnh nhạc xuống Arduino: ${payload}`);
         resolve(true);
       }
     });

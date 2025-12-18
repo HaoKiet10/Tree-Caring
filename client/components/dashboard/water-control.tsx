@@ -66,29 +66,31 @@ export default function WaterControl({
   }, [userId]);
 
   // --- 1. Fetch Data ---
-  const fetchWateringStatus = useCallback(async () => {
-    try {
-      const res = await fetch(`http://localhost:4000/api/watering/${userId}`);
-      if (res.ok) {
-        const result = await res.json();
+const fetchWateringStatus = useCallback(async () => {
+  if (isSaving) return; // ⛔ đang save thì đừng fetch
 
-        if (result === null) {
-          // Nếu chưa có dữ liệu -> Tạo mặc định
-          await createDefaultData();
-        } else {
-          setData(result);
-          // Chỉ cập nhật localThreshold khi mới load (loading = true)
-          if (loading) {
-            setLocalThreshold(result.soilThreshold);
-          }
+  try {
+    const res = await fetch(`http://localhost:4000/api/watering/${userId}`);
+    if (res.ok) {
+      const result = await res.json();
+
+      if (result === null) {
+        await createDefaultData();
+      } else {
+        setData(result);
+
+        // chỉ set threshold khi load lần đầu
+        if (loading) {
+          setLocalThreshold(result.soilThreshold);
         }
       }
-    } catch (error) {
-      console.error("Lỗi fetch:", error);
-    } finally {
-      setLoading(false);
     }
-  }, [userId, loading, createDefaultData]);
+  } catch (error) {
+    console.error("Lỗi fetch:", error);
+  } finally {
+    setLoading(false);
+  }
+}, [userId, loading, createDefaultData, isSaving]);
 
   // --- 2. Update Data ---
   const updateStatus = async (newThreshold: number) => {
@@ -111,7 +113,6 @@ export default function WaterControl({
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          pump_status: data.pumpStatus,
           mode: "AUTO",
           soil_threshold: validatedThreshold,
           max_pump_duration: data.maxPumpDuration,
@@ -124,17 +125,24 @@ export default function WaterControl({
       setIsSaving(false);
     }
   };
-  useEffect(() => {
-    const socket = getSocket();
-    socket.emit("join", userId);
-    socket.on("wateringNotification", (notification: WaterNotification) => {
-      setNotify(notification);
-    });
-    setData((prev) => (prev ? { ...prev, pumpStatus: false } : prev)); // Reset pumpStatus khi có thông báo
-    return () => {
-      socket.off("wateringNotification");
-    };
-  }, [userId]);
+useEffect(() => {
+  const socket = getSocket();
+  socket.emit("join", userId);
+
+  socket.on("wateringNotification", (notification: WaterNotification) => {
+    setNotify(notification);
+
+    if (notification.title === "Tưới xong") {
+      setData((prev) => (prev ? { ...prev, pumpStatus: false } : prev));
+    }
+  });
+
+  return () => {
+    socket.off("wateringNotification");
+  };
+}, [userId]);
+
+
 
   // --- 3. Polling ---
   useEffect(() => {
@@ -331,7 +339,10 @@ export default function WaterControl({
                 <p className='font-bold'>Đất đang khô</p>
                 <p>
                   Độ ẩm ({soilMoisture}%) thấp hơn ngưỡng ({currentThreshold}%).
-                  Hệ thống đang kích hoạt bơm.
+                  {!isPumpRunning
+                    ? "Máy bơm sẽ tự động bật."
+                    : "Hệ thống đang theo dõi."
+                  }
                 </p>
               </div>
             </>

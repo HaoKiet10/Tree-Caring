@@ -85,13 +85,15 @@ export const upsertWateringControl = async (data: WateringControlInput) => {
     },
     // Nếu tìm thấy -> Update các trường này
     update: { 
-      ...axios(data.pump_status !== undefined && { pumpStatus: data.pump_status }),
-      pumpStatus: data.pump_status,
-      mode: data.mode,
+    ...(data.pump_status !== undefined && { pumpStatus: data.pump_status }),
+    ...(data.mode !== undefined && { mode: data.mode }),
+    ...(data.soil_threshold !== undefined && {
       soilThreshold: data.soil_threshold,
-      lastWateredAt: data.last_watered_at,
-      updatedAt: new Date(),
-    },
+  }),
+  lastWateredAt: data.last_watered_at,
+  updatedAt: new Date(),
+},
+
     // Nếu KHÔNG tìm thấy -> Tạo mới với giá trị này
     create: {
       userId: data.userId,

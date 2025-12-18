@@ -66,7 +66,7 @@ export const connectMQTT = (io: Server) => {
             const threshold = user.wateringControl.soilThreshold;
 
             // Nếu đất khô hơn ngưỡng
-            if (currentSoil < threshold) {
+            if (threshold !== null && currentSoil < threshold) {
               const now = Date.now();
               const lastSent = lastEmailSent[validatedData.deviceId] || 0;
 

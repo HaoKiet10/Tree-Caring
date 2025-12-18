@@ -90,7 +90,6 @@ export const upsertWateringControl = async (data: WateringControlInput) => {
     ...(data.soil_threshold !== undefined && {
       soilThreshold: data.soil_threshold,
   }),
-  lastWateredAt: data.last_watered_at,
   updatedAt: new Date(),
 },
 
@@ -100,7 +99,6 @@ export const upsertWateringControl = async (data: WateringControlInput) => {
       pumpStatus: data.pump_status || false,
       mode: data.mode || "MANUAL",
       soilThreshold: data.soil_threshold || 30,
-      lastWateredAt: data.last_watered_at,
       updatedAt: new Date(),
     },
   });

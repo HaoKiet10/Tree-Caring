@@ -14,8 +14,6 @@ interface WateringControlData {
   pumpStatus: boolean;
   mode: "AUTO" | "MANUAL";
   soilThreshold: number;
-  maxPumpDuration: number;
-  lastWateredAt: string | null;
 }
 
 interface WaterControlProps {
@@ -46,8 +44,6 @@ export default function WaterControl({
       pump_status: false,
       mode: "AUTO",
       soil_threshold: 40,
-      max_pump_duration: 30,
-      last_watered_at: null,
     };
     try {
       const res = await fetch(`http://localhost:4000/api/watering/${userId}`, {
@@ -66,31 +62,31 @@ export default function WaterControl({
   }, [userId]);
 
   // --- 1. Fetch Data ---
-const fetchWateringStatus = useCallback(async () => {
-  if (isSaving) return; // ⛔ đang save thì đừng fetch
+  const fetchWateringStatus = useCallback(async () => {
+    if (isSaving) return; // ⛔ đang save thì đừng fetch
 
-  try {
-    const res = await fetch(`http://localhost:4000/api/watering/${userId}`);
-    if (res.ok) {
-      const result = await res.json();
+    try {
+      const res = await fetch(`http://localhost:4000/api/watering/${userId}`);
+      if (res.ok) {
+        const result = await res.json();
 
-      if (result === null) {
-        await createDefaultData();
-      } else {
-        setData(result);
+        if (result === null) {
+          await createDefaultData();
+        } else {
+          setData(result);
 
-        // chỉ set threshold khi load lần đầu
-        if (loading) {
-          setLocalThreshold(result.soilThreshold);
+          // chỉ set threshold khi load lần đầu
+          if (loading) {
+            setLocalThreshold(result.soilThreshold);
+          }
         }
       }
+    } catch (error) {
+      console.error("Lỗi fetch:", error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Lỗi fetch:", error);
-  } finally {
-    setLoading(false);
-  }
-}, [userId, loading, createDefaultData, isSaving]);
+  }, [userId, loading, createDefaultData, isSaving]);
 
   // --- 2. Update Data ---
   const updateStatus = async (newThreshold: number) => {
@@ -115,8 +111,6 @@ const fetchWateringStatus = useCallback(async () => {
         body: JSON.stringify({
           mode: "AUTO",
           soil_threshold: validatedThreshold,
-          max_pump_duration: data.maxPumpDuration,
-          last_watered_at: data.lastWateredAt,
         }),
       });
     } catch (error) {
@@ -125,24 +119,22 @@ const fetchWateringStatus = useCallback(async () => {
       setIsSaving(false);
     }
   };
-useEffect(() => {
-  const socket = getSocket();
-  socket.emit("join", userId);
+  useEffect(() => {
+    const socket = getSocket();
+    socket.emit("join", userId);
 
-  socket.on("wateringNotification", (notification: WaterNotification) => {
-    setNotify(notification);
+    socket.on("wateringNotification", (notification: WaterNotification) => {
+      setNotify(notification);
 
-    if (notification.title === "Tưới xong") {
-      setData((prev) => (prev ? { ...prev, pumpStatus: false } : prev));
-    }
-  });
+      if (notification.title === "Tưới xong") {
+        setData((prev) => (prev ? { ...prev, pumpStatus: false } : prev));
+      }
+    });
 
-  return () => {
-    socket.off("wateringNotification");
-  };
-}, [userId]);
-
-
+    return () => {
+      socket.off("wateringNotification");
+    };
+  }, [userId]);
 
   // --- 3. Polling ---
   useEffect(() => {
@@ -341,8 +333,7 @@ useEffect(() => {
                   Độ ẩm ({soilMoisture}%) thấp hơn ngưỡng ({currentThreshold}%).
                   {!isPumpRunning
                     ? "Máy bơm sẽ tự động bật."
-                    : "Hệ thống đang theo dõi."
-                  }
+                    : "Hệ thống đang theo dõi."}
                 </p>
               </div>
             </>
@@ -372,9 +363,6 @@ useEffect(() => {
           )}
         </div>
 
-        <div className='text-center text-xs text-gray-400'>
-          <i>Nhấn Enter hoặc click ra ngoài để lưu cấu hình.</i>
-        </div>
         {notify && (
           <div className='mt-4 p-4 bg-blue-50 border border-blue-100 text-blue-800 rounded-lg text-sm flex gap-3 items-start'>
             <svg

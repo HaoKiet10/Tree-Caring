@@ -14,10 +14,10 @@ export const handleAutoWatering = async (
   const { soilThreshold, pumpStatus, mode } = config;
 
   // ❌ Không AUTO thì thôi
-  if (mode !== "AUTO") return;
+  if (mode !== "AUTO" || soilThreshold === null) return;
 
   // 🚿 CHỈ GỬI ON Ở ĐÂY
-  if (soilMoisture < soilThreshold && pumpStatus === false) {
+  if (soilMoisture < soilThreshold! && pumpStatus === false) {
     await publishWateringCommand("ON");
 
     // 🔒 khóa ngay

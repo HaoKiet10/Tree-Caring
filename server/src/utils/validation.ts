@@ -37,7 +37,6 @@ export const wateringControlSchema = z.object({
   pump_status: z.boolean(),
   mode: z.enum(["AUTO", "MANUAL"]) || "AUTO",
   soil_threshold: z.number().min(0).max(100),
-  last_watered_at: z.date().optional(),
 });
 
 export type WateringControlInput = z.infer<typeof wateringControlSchema>;

@@ -52,11 +52,15 @@ export const updateWateringStatus = async (req: Request, res: Response) => {
       soil_threshold,
     });
 
-    // 2️⃣ Nếu bật pump → gửi lệnh MQTT
-    if (pump_status === true) {
-      await wateringService.publishWateringCommand("ON");
-    } else {
-      await wateringService.publishWateringCommand("OFF");
+    /**
+     * 2️⃣ CHỈ MANUAL MỚI ĐƯỢC GỬI MQTT
+     */
+    if (mode === "MANUAL") {
+      if (pump_status === true) {
+        await wateringService.publishWateringCommand("ON");
+      } else {
+        await wateringService.publishWateringCommand("OFF");
+      }
     }
 
     return res.status(200).json(updatedStatus);

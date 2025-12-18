@@ -1,7 +1,7 @@
 import prisma from "../config/db";
 import { WateringControlInput } from "../utils/validation"; // Đảm bảo interface này có đủ các trường bên dưới
 import mqtt from "mqtt";
-
+import axios from "axios";
 const mqttOptions: mqtt.IClientOptions = {
   host: "broker.hivemq.com", // Hoặc broker của bạn
   port: 1883,
@@ -48,19 +48,36 @@ client.on("message", async (topic, message) => {
   }
 });
 export const publishWateringCommand = (action: "ON" | "OFF") => {
-  return new Promise((resolve, reject) => {
-    client.publish("078116497/Pump", action, { qos: 1 }, (err) => {
+  return new Promise(async (resolve, reject) => {
+    client.publish("078116497/Pump", action, { qos: 1 }, async (err) => {
       if (err) {
         console.error("❌ Gửi lệnh tưới thất bại:", err);
         reject(err);
       } else {
         console.log(`🚿 Đã gửi lệnh tưới: ${action}`);
+
+        // 🔔 CALL PUSHSAFER NGAY TẠI ĐÂY
+        if (action === "ON") {
+          try {
+            await axios.get("https://www.pushsafer.com/api", {
+              params: {
+                k: "HjAd02N6nuSNjHBl5cNb",
+                v: 2,
+                m: "🚿 Hệ thống đã pump nước",
+              },
+            });
+
+            console.log("📲 Pushsafer: Notification sent");
+          } catch (e) {
+            console.error("❌ Pushsafer error:", e);
+          }
+        }
+
         resolve(true);
       }
     });
   });
 };
-
 // Hàm Upsert: Tự động Tạo hoặc Cập nhật
 export const upsertWateringControl = async (data: WateringControlInput) => {
   return await prisma.wateringControl.upsert({

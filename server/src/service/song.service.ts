@@ -3,17 +3,17 @@ import mqtt from "mqtt";
 
 // --- CẤU HÌNH MQTT ---
 // Sử dụng cùng Broker với file mqtt.service để đồng bộ
-const BROKER_URL = "ws://broker.hivemq.com:8000/mqtt";
-const CONTROL_TOPIC = "garden/song/control";
+const BROKER_URL = "mqtt://broker.hivemq.com:1883"; // Sử dụng WebSocket cho Broker public
+const CONTROL_TOPIC = "078116497/music";
 
 const client = mqtt.connect(BROKER_URL);
 
 client.on("connect", () => {
-  console.log("✅ Song Service: Đã kết nối MQTT để gửi lệnh");
+  console.log(" Song Service: Đã kết nối MQTT để gửi lệnh");
 });
 
 client.on("error", (err) => {
-  console.error("❌ Song Service: Lỗi kết nối MQTT", err);
+  console.error(" Song Service: Lỗi kết nối MQTT", err);
 });
 
 /**
@@ -39,7 +39,6 @@ export const publishSongCommand = (
   const payload = JSON.stringify({
     action: action,
     song_id: songId || 0,
-    timestamp: new Date().toISOString(),
   });
 
   return new Promise((resolve, reject) => {

@@ -1,8 +1,8 @@
 import express, { Express } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { createServer } from "http"; // Thêm dòng này
-import { Server, Socket } from "socket.io"; // Thêm dòng này
+import { createServer } from "http";
+import { Server, Socket } from "socket.io";
 
 import authRoutes from "./routes/auth.routes";
 import sensorRoutes from "./routes/sensor.routes";
@@ -17,10 +17,10 @@ const app: Express = express();
 const PORT = process.env.PORT || 4000;
 
 // --- CẤU HÌNH HTTP SERVER & SOCKET.IO ---
-const httpServer = createServer(app); // Bọc Express vào HTTP Server
+const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "*", // Cho phép mọi nguồn kết nối (hoặc để http://localhost:3000)
+    origin: "*",
     methods: ["GET", "POST"],
   },
 });
@@ -44,15 +44,6 @@ app.get("/", (req, res) => {
 // Truyền 'io' vào để mqtt.service có thể bắn tin nhắn lên Web
 connectMQTT(io);
 
-// Lắng nghe kết nối từ Socket.io (Tùy chọn - để debug)
-io.on("connection", (socket: Socket) => {
-  console.log(`🔌 Một trình duyệt đã kết nối: ${socket.id}`);
-  socket.on("disconnect", () => {
-    console.log("❌ Trình duyệt đã ngắt kết nối");
-  });
-});
-
-// THAY ĐỔI: Dùng httpServer.listen thay vì app.listen
 httpServer.listen(PORT, () => {
-  console.log(`⚡️[server]: Server is running at http://localhost:${PORT}`);
+  console.log(`[server]: Server is running at http://localhost:${PORT}`);
 });

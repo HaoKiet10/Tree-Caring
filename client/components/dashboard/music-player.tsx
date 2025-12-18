@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, Square, Music2, Loader2, Volume2 } from "lucide-react"; // Dùng Lucide cho đồng bộ
+import { Play, Square, Music2, Loader2, Volume2, Radio } from "lucide-react"; // Thêm icon Radio cho giống sensor
 import { io } from "socket.io-client";
 
 interface Song {
@@ -18,13 +18,16 @@ export default function MusicPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- 1. KẾT NỐI SOCKET.IO (LẮNG NGHE ARDUINO) ---
+  // --- 1. KẾT NỐI SOCKET.IO ---
   useEffect(() => {
+    // Kết nối tới Backend
     const socket = io("http://localhost:4000");
 
-    socket.on("song_finished", (data: { songId: number }) => {
-      console.log("📨 Arduino báo: Đã phát xong bài", data.songId);
-      // Nếu bài kết thúc đúng là bài đang hiện trên Web, reset trạng thái
+    // Lắng nghe sự kiện 'song_finished' từ Backend gửi xuống
+    socket.on("song_finished", (data) => {
+      console.log("📨 Nhận tín hiệu dừng từ Arduino!");
+
+      // Cập nhật giao diện về trạng thái dừng
       setIsPlaying(false);
       setCurrentSong(null);
     });
@@ -34,7 +37,7 @@ export default function MusicPlayer() {
     };
   }, []);
 
-  // --- 2. FETCH DATA (GIỮ NGUYÊN LOGIC NHƯNG CLEAN UI) ---
+  // --- 2. FETCH DATA ---
   useEffect(() => {
     const fetchSongs = async () => {
       try {
@@ -79,64 +82,71 @@ export default function MusicPlayer() {
   };
 
   return (
-    <Card className='w-full max-w-md mx-auto overflow-hidden border-none shadow-2xl bg-white/80 backdrop-blur-md'>
-      {/* Header với Gradient mượt hơn */}
-      <CardHeader className='bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white'>
+    <Card className='w-full h-full border border-emerald-100 shadow-sm bg-white'>
+      {/* Header Clean giống Sensor Card */}
+      <CardHeader className='pb-2 border-b border-emerald-50'>
         <div className='flex justify-between items-center'>
-          <CardTitle className='flex items-center gap-3 text-xl font-bold'>
-            <Music2 className='h-6 w-6' />
-            Vườn Âm Nhạc
+          <CardTitle className='flex items-center gap-2 text-lg font-bold text-emerald-900'>
+            <Music2 className='h-5 w-5 text-emerald-600' />
+            Trình Phát Nhạc
           </CardTitle>
-          {isPlaying && <Volume2 className='h-5 w-5 animate-bounce' />}
+          {/* Trạng thái hoạt động giống đèn báo sensor */}
+          <div className='flex items-center gap-2'>
+            <span
+              className={`text-xs font-medium ${
+                isPlaying ? "text-emerald-600" : "text-gray-400"
+              }`}
+            >
+              {isPlaying ? "Đang phát" : "Sẵn sàng"}
+            </span>
+            <div
+              className={`h-2 w-2 rounded-full ${
+                isPlaying ? "bg-emerald-500 animate-pulse" : "bg-gray-300"
+              }`}
+            ></div>
+          </div>
         </div>
-        <p className='text-indigo-100 text-xs mt-1 opacity-80'>
-          Điều khiển nhạc cho cây xanh qua MQTT
-        </p>
       </CardHeader>
 
       <CardContent className='p-0'>
-        <div className='max-h-[380px] overflow-y-auto p-4 space-y-3 custom-scrollbar'>
+        <div className='max-h-[320px] overflow-y-auto p-3 space-y-2 custom-scrollbar'>
           {isLoading ? (
-            <div className='flex flex-col items-center justify-center py-12 text-gray-400'>
-              <Loader2 className='h-8 w-8 animate-spin mb-2' />
-              <p className='text-sm'>Đang kết nối thư viện...</p>
+            <div className='flex flex-col items-center justify-center py-8 text-emerald-600/50'>
+              <Loader2 className='h-6 w-6 animate-spin mb-2' />
+              <p className='text-xs'>Đang tải dữ liệu...</p>
             </div>
           ) : (
             songs.map((song) => (
               <div
                 key={song.id}
                 onClick={() => handleSongClick(song)}
-                className={`group relative flex items-center p-3 rounded-xl cursor-pointer transition-all duration-300 border ${
+                className={`group flex items-center p-2 rounded-lg cursor-pointer transition-all border ${
                   currentSong?.id === song.id
-                    ? "bg-indigo-50 border-indigo-200 shadow-sm"
-                    : "bg-white border-gray-100 hover:border-indigo-200 hover:shadow-md"
+                    ? "bg-emerald-50 border-emerald-200"
+                    : "bg-white border-transparent hover:bg-emerald-50/50 hover:border-emerald-100"
                 }`}
               >
-                {/* Đĩa nhạc xoay khi đang phát */}
+                {/* Icon bên trái: Thay vì đĩa nhạc to, dùng icon nhỏ gọn tinh tế hơn */}
                 <div
-                  className={`relative h-12 w-12 flex-shrink-0 rounded-full overflow-hidden border-2 ${
+                  className={`h-8 w-8 flex items-center justify-center rounded-md mr-3 transition-colors ${
                     currentSong?.id === song.id && isPlaying
-                      ? "border-indigo-500 animate-[spin_3s_linear_infinite]"
-                      : "border-gray-200"
+                      ? "bg-emerald-100 text-emerald-600"
+                      : "bg-gray-100 text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
                   }`}
                 >
-                  <div className='absolute inset-0 bg-gradient-to-tr from-gray-200 to-gray-400 flex items-center justify-center'>
-                    <Music2
-                      className={`h-5 w-5 ${
-                        currentSong?.id === song.id
-                          ? "text-indigo-600"
-                          : "text-gray-500"
-                      }`}
-                    />
-                  </div>
+                  {currentSong?.id === song.id && isPlaying ? (
+                    <Volume2 className='h-4 w-4 animate-pulse' />
+                  ) : (
+                    <Radio className='h-4 w-4' />
+                  )}
                 </div>
 
-                <div className='ml-4 flex-1 min-w-0'>
+                <div className='flex-1 min-w-0'>
                   <h4
-                    className={`text-sm font-semibold truncate ${
+                    className={`text-sm font-medium truncate ${
                       currentSong?.id === song.id
-                        ? "text-indigo-900"
-                        : "text-gray-800"
+                        ? "text-emerald-900"
+                        : "text-gray-700"
                     }`}
                   >
                     {song.title}
@@ -146,16 +156,16 @@ export default function MusicPlayer() {
                   </p>
                 </div>
 
-                {/* Nút Play/Pause nhỏ bên phải */}
-                <div className='ml-2'>
+                {/* Animation sóng nhạc xanh lá */}
+                <div className='ml-2 w-6 flex justify-center'>
                   {currentSong?.id === song.id && isPlaying ? (
-                    <div className='flex gap-1 h-3 items-end'>
-                      <div className='w-1 bg-indigo-500 animate-[music-bar_0.8s_ease-in-out_infinite]'></div>
-                      <div className='w-1 bg-indigo-500 animate-[music-bar_1.2s_ease-in-out_infinite]'></div>
-                      <div className='w-1 bg-indigo-500 animate-[music-bar_1s_ease-in-out_infinite]'></div>
+                    <div className='flex gap-[2px] h-3 items-end'>
+                      <div className='w-[3px] bg-emerald-500 animate-[music-bar_0.6s_ease-in-out_infinite]'></div>
+                      <div className='w-[3px] bg-emerald-500 animate-[music-bar_0.8s_ease-in-out_infinite]'></div>
+                      <div className='w-[3px] bg-emerald-500 animate-[music-bar_1s_ease-in-out_infinite]'></div>
                     </div>
                   ) : (
-                    <Play className='h-4 w-4 text-gray-300 group-hover:text-indigo-500 transition-colors' />
+                    <Play className='h-3 w-3 text-gray-300 group-hover:text-emerald-400' />
                   )}
                 </div>
               </div>
@@ -163,30 +173,28 @@ export default function MusicPlayer() {
           )}
         </div>
 
-        {/* Player Mini ở dưới cùng khi có bài đang chọn */}
+        {/* Footer điều khiển Minimalist */}
         {currentSong && (
-          <div className='p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between animate-in slide-in-from-bottom-5 duration-500'>
-            <div className='flex items-center gap-3'>
-              <div className='flex flex-col'>
-                <span className='text-[10px] uppercase font-bold text-gray-400 tracking-widest'>
-                  Đang phát
-                </span>
-                <span className='text-sm font-bold text-indigo-700 truncate max-w-[150px]'>
-                  {currentSong.title}
-                </span>
-              </div>
+          <div className='p-3 bg-emerald-50/50 border-t border-emerald-100 flex items-center justify-between animate-in slide-in-from-bottom-2'>
+            <div className='flex flex-col'>
+              <span className='text-[10px] uppercase font-bold text-emerald-600/70 tracking-wider'>
+                Now Playing
+              </span>
+              <span className='text-sm font-bold text-emerald-900 truncate max-w-[140px]'>
+                {currentSong.title}
+              </span>
             </div>
             <Button
               size='sm'
-              variant='destructive'
+              variant='outline'
               onClick={() => {
                 setIsPlaying(false);
                 setCurrentSong(null);
                 sendSongCommand("STOP");
               }}
-              className='rounded-full px-4 h-9 shadow-lg shadow-red-200 flex gap-2'
+              className='h-8 text-xs border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300 transition-colors'
             >
-              <Square className='h-3 w-3 fill-current' /> Dừng
+              <Square className='h-3 w-3 fill-current mr-1' /> Dừng
             </Button>
           </div>
         )}
@@ -196,17 +204,17 @@ export default function MusicPlayer() {
         @keyframes music-bar {
           0%,
           100% {
-            height: 4px;
+            height: 3px;
           }
           50% {
-            height: 12px;
+            height: 10px;
           }
         }
         .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
+          width: 3px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #e2e8f0;
+          background: #d1fae5; /* emerald-100 */
           border-radius: 10px;
         }
       `}</style>

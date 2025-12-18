@@ -33,7 +33,7 @@ export default function WaterControl({ soilMoisture }: WaterControlProps) {
   const [localThreshold, setLocalThreshold] = useState<string | number>(40); // State nội bộ cho input
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false); // Trạng thái đang lưu
-  const [notify, setNotify] = useState<WateringNotify | null>(null);
+  const [notify, setNotify] = useState<WaterNotification | null>(null);
   const userId = 1;
 
   const createDefaultData = useCallback(async () => {
@@ -125,8 +125,7 @@ export default function WaterControl({ soilMoisture }: WaterControlProps) {
     socket.on("wateringNotification", (notification: WaterNotification) => {
       setNotify(notification);
     });
-    setData((prev) => (prev
-  ? { ...prev, pumpStatus: false } : prev)); // Reset pumpStatus khi có thông báo
+    setData((prev) => (prev ? { ...prev, pumpStatus: false } : prev)); // Reset pumpStatus khi có thông báo
     return () => {
       socket.off("wateringNotification");
     };
@@ -350,26 +349,25 @@ export default function WaterControl({ soilMoisture }: WaterControlProps) {
           <i>Nhấn Enter hoặc click ra ngoài để lưu cấu hình.</i>
         </div>
         {notify && (
-          <div
-            className="mt-4 p-4 bg-blue-50 border border-blue-100 text-blue-800 rounded-lg text-sm flex gap-3 items-start"
-            ></div>
-            <svg>
-              className = "w-5 h-5 shrink-0 text-blue-500"
-              fill = "none"
-              viewBox = "0 0 24 24"
-              stroke = "currentColor">
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-100 text-blue-800 rounded-lg text-sm flex gap-3 items-start">
+            <svg
+              className="w-5 h-5 shrink-0 text-blue-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
               <path
-                strokeLinecap = "round"
-                strokeLinejoin = "round"
-                strokeWidth = {2}
-                d = "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
-              </svg>
+            </svg>
             <div>
               <p className="font-bold">{notify.title}</p>
               <p>{notify.message}</p>
             </div>
-        )}      
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -2,22 +2,30 @@ import prisma from "../config/db";
 import { WateringControlInput } from "../utils/validation"; // Đảm bảo interface này có đủ các trường bên dưới
 import mqtt from "mqtt";
 
+const mqttOptions: mqtt.IClientOptions = {
+  host: "broker.hivemq.com", // Hoặc broker của bạn
+  port: 1883,
+  protocol: "mqtt",
+};
+
+const client = mqtt.connect(mqttOptions);
+
 client.on("connect", () => {
   console.log("✅ Music Service: Đã kết nối MQTT HiveMQ");
 
   // 👇 SUBSCRIBE trạng thái tưới nước
-  client.subscribe("garden/watering/status", { qos: 1 }, (err) => {
+  client.subscribe("078116497/Pump", { qos: 2 }, (err) => {
     if (err) {
       console.error("❌ Subscribe watering status thất bại", err);
     } else {
-      console.log("📡 Đã subscribe garden/watering/status");
+      console.log("📡 Đã subscribe 078116497/Pump");
     }
   });
 });
 
 client.on("message", async (topic, message) => {
   try {
-    if (topic === "garden/watering/status") {
+    if (topic === "078116497/Pump") {
       const payload = JSON.parse(message.toString());
 
       console.log("🚿 Watering status:", payload);
@@ -39,24 +47,14 @@ client.on("message", async (topic, message) => {
     console.error("❌ MQTT watering message error:", err);
   }
 });
-
-export const publishWateringCommand = (
-  action: "START" | "STOP",
- 
-) => {
-  const topic = "garden/watering/control";
-
-  const payload = JSON.stringify({
-    action,
-  });
-
+export const publishWateringCommand = (action: "ON" | "OFF") => {
   return new Promise((resolve, reject) => {
-    client.publish(topic, payload, { qos: 1 }, (err) => {
+    client.publish("078116497/Pump", action, { qos: 1 }, (err) => {
       if (err) {
         console.error("❌ Gửi lệnh tưới thất bại:", err);
         reject(err);
       } else {
-        console.log(`🚿 Đã gửi lệnh tưới: ${payload}`);
+        console.log(`🚿 Đã gửi lệnh tưới: ${action}`);
         resolve(true);
       }
     });
@@ -74,7 +72,6 @@ export const upsertWateringControl = async (data: WateringControlInput) => {
       pumpStatus: data.pump_status,
       mode: data.mode,
       soilThreshold: data.soil_threshold,
-      maxPumpDuration: data.max_pump_duration,
       lastWateredAt: data.last_watered_at,
       updatedAt: new Date(),
     },
@@ -84,7 +81,6 @@ export const upsertWateringControl = async (data: WateringControlInput) => {
       pumpStatus: data.pump_status || false,
       mode: data.mode || "MANUAL",
       soilThreshold: data.soil_threshold || 30,
-      maxPumpDuration: data.max_pump_duration || 10,
       lastWateredAt: data.last_watered_at,
       updatedAt: new Date(),
     },

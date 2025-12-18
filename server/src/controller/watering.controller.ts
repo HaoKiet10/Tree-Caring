@@ -41,12 +41,7 @@ export const updateWateringStatus = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Invalid User ID" });
   }
 
-  const {
-    pump_status,
-    mode,
-    soil_threshold,
-    max_pump_duration,
-  } = req.body;
+  const { pump_status, mode, soil_threshold } = req.body;
 
   try {
     // 1️⃣ Update DB (source of truth)
@@ -55,17 +50,13 @@ export const updateWateringStatus = async (req: Request, res: Response) => {
       pump_status,
       mode,
       soil_threshold,
-      max_pump_duration,
     });
 
     // 2️⃣ Nếu bật pump → gửi lệnh MQTT
     if (pump_status === true) {
-      await wateringService.publishWateringCommand(
-        "START",
-        max_pump_duration
-      );
+      await wateringService.publishWateringCommand("ON");
     } else {
-      await wateringService.publishWateringCommand("STOP");
+      await wateringService.publishWateringCommand("OFF");
     }
 
     return res.status(200).json(updatedStatus);

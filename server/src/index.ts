@@ -8,6 +8,7 @@ import authRoutes from "./routes/auth.routes";
 import sensorRoutes from "./routes/sensor.routes";
 import wateringRoutes from "./routes/watering.routes";
 import songRoutes from "./routes/song.routes";
+import emailRoutes from "./routes/email.routes";
 
 import { connectMQTT } from "./service/mqtt.service";
 
@@ -34,7 +35,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/sensors", sensorRoutes);
 app.use("/api/watering", wateringRoutes);
 app.use("/api/songs", songRoutes);
-
+app.use("/api/send-report", emailRoutes);
 // Health check
 app.get("/", (req, res) => {
   res.send("IoT Server is running with TypeScript and Socket.io!");

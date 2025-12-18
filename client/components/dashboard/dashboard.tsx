@@ -133,7 +133,10 @@ export default function Dashboard() {
 
         <div className='space-y-6'>
           <div className='w-full'>
-            <WaterControl soilMoisture={latest?.soilMoisture || 0} />
+            <WaterControl
+              soilMoisture={latest?.soilMoisture || 0}
+              user={user}
+            />
           </div>
 
           <div className='grid gap-6 lg:grid-cols-2'>

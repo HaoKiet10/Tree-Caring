@@ -57,20 +57,27 @@ const htmlContent = `
 </html>
 `;
 
-const msg = {
-  to: "nqthai23@clc.fitus.edu.vn",
-  from: "thai37205@gmail.com",
-  subject: "[Tree-Caring] Thông báo: Cây của bạn đã được chăm sóc thành công",
-  text: `Cây của bạn trong dự án Tree-Caring đã được tưới vào lúc ${now}. Truy cập website để xem chi tiết.`,
-  html: htmlContent,
-};
+// get user email from database or configuration
 
-sgMail
-  .send(msg)
-  .then(() => console.log("✅ Email thông báo đã được gửi thành công!"))
-  .catch((error) => {
-    console.error("❌ Lỗi khi gửi email:");
-    if (error.response) {
-      console.error(error.response.body);
-    }
-  });
+export const sendEmailToUser = async (
+  userEmail: string,
+  subject?: string,
+  html?: string
+) => {
+  const msg = {
+    to: userEmail,
+    from: "thai37205@gmail.com",
+    subject:
+      subject ||
+      "[Tree-Caring] Thông báo: Cây của bạn đã được chăm sóc thành công",
+    text: `Cây của bạn trong dự án Tree-Caring đã được tưới vào lúc ${now}. Truy cập website để xem chi tiết.`,
+    html: html || htmlContent,
+  };
+
+  try {
+    await sgMail.send(msg);
+    console.log(`Đã gửi email tới ${userEmail}`);
+  } catch (error) {
+    console.error("Lỗi gửi email:", error);
+  }
+};
